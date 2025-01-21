@@ -39,21 +39,7 @@ library(ggplot2)
 rstan_options(auto_write = TRUE)  # Speed up Stan usage
 options(mc.cores = parallel::detectCores())
 
-###############################################################################
-# 1) Download / Load Arcene Data
-###############################################################################
-# Arcene data is available through the UCI ML repository:
-#   https://archive.ics.uci.edu/ml/datasets/Arcene
-# Typically, we have these files:
-#   arcene_train.data, arcene_train.labels,
-#   arcene_valid.data, arcene_valid.labels
-#
-# For demonstration, assume these files are locally available in a path or
-# already downloaded. If needed, adjust to read them from a URL or other path.
-#
-# Arcene has 100 training samples (50 positives, 50 negatives)
-# and an additional 100 "validation" samples. Each sample has ~10,000 features.
-###############################################################################
+
 
 arcene_data_path <- "helicon/ARCENE"  # CHANGE this to your local path
 
@@ -77,22 +63,14 @@ arcene_valid_label[arcene_valid_label < 1] <- 0
 cat("Arcene Train dims:", dim(arcene_train_data), "\n")
 cat("Arcene Valid dims:", dim(arcene_valid_data), "\n")
 
-# Combine train + valid if desired, or keep separate
-# For demonstration, let's create a single dataset (X, y), then do our own splits.
-# Here, we'll do a simple approach: keep official train as 'train set' and
-# official valid as 'test set'.
+
 
 X_train_raw <- arcene_train_data
 y_train     <- arcene_train_label
 X_test_raw  <- arcene_valid_data
 y_test      <- arcene_valid_label
 
-# OPTIONAL: Scale features
-# Because many features in Arcene can vary in scale or be constant, we typically
-# standardize them. But watch out for constant features that cause NAs after scaling.
-#
-# We'll do a simple z-scale on the training set. We remove zero-variance features
-# as well.
+
 
 nzv <- apply(X_train_raw, 2, function(col) sd(col) == 0)
 X_train_filtered <- X_train_raw[, !nzv]
@@ -118,18 +96,7 @@ n_train <- nrow(X_train)
 p       <- ncol(X_train)
 n_test  <- nrow(X_test)
 
-###############################################################################
-# 2) Define Stan Models
-###############################################################################
-# We'll do a logistic regression with three priors:
-#   1) Cradle
-#   2) Horseshoe
-#   3) Lasso
-#
-# We'll produce a "generated quantities" block to get log_lik for each observation.
-# Then we can compute ELPD or other metrics. For classification, we'll also
-# get predicted probabilities and classify 0/1 using a 0.5 cutoff.
-###############################################################################
+
 
 cradle_code <- "
 data {
@@ -273,17 +240,7 @@ fit_stan_model <- function(stan_model, X, y,
   return(fit)
 }
 
-# # We'll do single-chain to keep it quicker, but you can set chains=4 if time permits.
-# cat("\nFitting Cradle model...\n")
-# fit_cradle <- fit_stan_model(model_cradle, X_train, y_train,
-#                              chains=8, iter=5000, warmup=2500,
-#                              seed=123, control=list(adapt_delta=0.85, max_treedepth=12))
-# cat("\nFitting Horseshoe model...\n")
-# fit_horse <- fit_stan_model(model_horseshoe, X_train, y_train,
-#                             chains=4, iter=2000, warmup=1000, seed=2222)
-# cat("\nFitting Lasso model...\n")
-# fit_lasso <- fit_stan_model(model_lasso, X_train, y_train,
-#                             chains=4, iter=2000, warmup=1000, seed=3333)
+
 
 setwd("~")
 fit_cradle_file <- "fit_cradle.RDS"
@@ -372,12 +329,7 @@ cat("Cradle:", auc_cradle_train, "\n")
 cat("Horse :", auc_horse_train,  "\n")
 cat("Lasso :", auc_lasso_train,  "\n")
 
-###############################################################################
-# 6) Prediction on TEST set
-###############################################################################
-# We'll do "posterior predictive" in a simplified sense:
-# get posterior draws of beta from the fit and compute X_test %*% beta
-# for each iteration. Then we average.
+
 
 extract_posterior_betas <- function(fit) {
   # returns a matrix (iterations x p)
@@ -420,15 +372,9 @@ cat("Cradle:", auc_cradle_test, "\n")
 cat("Horse :", auc_horse_test,  "\n")
 cat("Lasso :", auc_lasso_test,  "\n")
 
-###############################################################################
-# 7) Figures for Analysis
-###############################################################################
-# We'll produce some simple plots:
-#   - Distribution of predicted probabilities on test set
-#   - ROC curves for test set
-#   - Possibly a bar chart of accuracy
 
-# 7a) Distribution of predicted probabilities (test)
+
+
 df_test_prob <- data.frame(
   Cradle = test_prob_cradle,
   Horse  = test_prob_horse,
