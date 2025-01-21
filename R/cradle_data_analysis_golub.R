@@ -1,14 +1,4 @@
-############################################################
-# incremental_analysis_fixed.R
-# 
-# Purpose:
-#  - Show how to confirm we have multi-class data in each fold
-#  - Possibly fix single-class training sets by using fewer folds
-#  - Print actual class distribution
-############################################################
 
-# -------------------------
-# (0) Libraries
 # -------------------------
 install.packages("BiocManager")
 
@@ -166,14 +156,9 @@ extract_betas <- function(fit) {
   apply(post, 2, mean)
 }
 
-# -------------------------
-# (4) K-Fold CV
-# -------------------------
-#
-# Try fewer folds if you keep ending up with single-class training sets.
-# For example, set K=2 or K=3. That way each training set is larger.
 
-K <- 10 # or set K=2 or 3 if still single-class
+
+K <- 10 
 set.seed(999)
 folds <- createFolds(factor(y), k=K, list=FALSE, returnTrain=FALSE)
 cv_dir <- "cv_results"
