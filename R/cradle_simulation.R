@@ -1,10 +1,4 @@
-# --------------------------------------------------------
-# run_compare_priors_in_batches.R
-# --------------------------------------------------------
-# This script does a more extensive simulation study for Cradle, Horseshoe, and Lasso.
-# It is designed to be sourced (e.g., source("run_compare_priors_in_batches.R")).
-# We run in "batches" (chunks of scenarios) to avoid crashing or hogging memory,
-# and save output after each chunk so we don't lose progress if R stops mid-run.
+
 
 # ------------------------------
 # 0. Load Libraries
@@ -26,17 +20,7 @@ cradle_model    <- stan_model("stan/cradle_regression.stan")
 horseshoe_model <- stan_model("stan/horseshoe_regression.stan")
 lasso_model     <- stan_model("stan/lasso_regression.stan")
 
-# ------------------------------
-# 2) Create an extensive parameter grid
-# ------------------------------
-# We'll vary:
-#   N in {100, 200, 400}
-#   p in {200, 500, 1000}
-#   s in {10, 20, 40} (number of nonzero signals)
-#   beta_signal in {1.0, 1.5, 2.0, 3.0}
-#   replicates = 10
-# => 3 x 3 x 3 x 4 x 10 = 1080 total scenarios
-# Adjust these as needed for your computational resources.
+#
 cat("Building parameter grid...\n")
 big_grid <- expand.grid(
   N = c(100, 200, 400),
@@ -195,10 +179,7 @@ for (ch in seq_len(n_chunks)) {
 
 cat("\nAll chunks completed!\n")
 
-# ------------------------------
-# 6) Combine Results and Summarize
-# ------------------------------
-# If you prefer to do this step in a separate script or after verifying all chunks, you can move it.
+
 all_files <- list.files("batch_results", pattern = "^sim_results_chunk_.*\\.rds$", full.names = TRUE)
 all_results <- do.call(rbind, lapply(all_files, readRDS))
 cat("Combined results have", nrow(all_results), "rows in total.\n")
